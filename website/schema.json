@@ -1,0 +1,23 @@
+{
+  "title": "便签集市",
+  "page_type": "mixed",
+  "properties": {
+    "标题":     { "text": "" },
+    "作者":     { "text": "" },
+    "简介":     { "text": "" },
+    "分享内容": { "text": "" },
+    "便签数量": { "number": { "decimalPlaces": 0, "useSeparate": false } },
+    "下载次数": { "number": { "decimalPlaces": 0, "useSeparate": false } },
+    "上传时间": { "date": "1970-01-01T00:00:00Z" }
+  },
+  "field_mapping": {
+    "标题":     { "value_type": "text",   "form_input": "[name=\"title\"]",       "display_selector": ".market-title",     "render_signal": ".market-title" },
+    "作者":     { "value_type": "text",   "form_input": "[name=\"author\"]",      "display_selector": ".market-author",    "render_signal": ".market-author" },
+    "简介":     { "value_type": "text",   "form_input": "[name=\"description\"]", "display_selector": ".market-desc",      "render_signal": ".market-desc" },
+    "分享内容": { "value_type": "text",   "form_input": "[name=\"content\"]",     "display_selector": ".market-content",   "render_signal": ".market-content" },
+    "便签数量": { "value_type": "number", "form_input": "[name=\"note_count\"]",  "display_selector": ".market-count",     "render_signal": ".market-count" },
+    "下载次数": { "value_type": "number", "form_input": null,                     "display_selector": ".market-downloads", "render_signal": ".market-downloads" },
+    "上传时间": { "value_type": "date",   "form_input": null,                     "display_selector": ".market-time",      "render_signal": ".market-time" }
+  },
+  "options_map": {}
+}

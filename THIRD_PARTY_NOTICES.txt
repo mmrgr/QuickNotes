@@ -1,0 +1,18 @@
+QuickNotes 第三方组件说明
+========================
+
+QuickNotes 的 Windows 便携版包含以下开源组件：
+
+1. PyQt6
+   https://www.riverbankcomputing.com/software/pyqt/
+   PyQt6 免费版本按 GNU GPL v3 授权。
+
+2. Qt 6
+   https://www.qt.io/licensing/open-source-lgpl-obligations
+   便携版使用 PyQt6 wheel 中对应的 Qt 运行库。Qt 组件的许可和版权信息随 Qt 项目发布。
+
+3. Python
+   https://docs.python.org/3/license.html
+   Python 运行时及标准库按 Python Software Foundation License 发布。
+
+本文件用于说明组件来源；各组件的完整许可证文本以其发行包中的文件和官方项目为准。

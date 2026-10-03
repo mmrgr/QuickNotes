@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>便签集市</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #f5f6f8; color: #1f2329;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 20px 64px; }
+
+  header.hero { margin-bottom: 26px; }
+  header.hero h1 { font-size: clamp(22px, 4vw, 32px); margin: 0 0 8px; letter-spacing: -0.3px; }
+  header.hero p { margin: 0; color: #646a73; font-size: 14px; }
+  .stat-row { display: flex; gap: 22px; margin-top: 16px; flex-wrap: wrap; }
+  .stat-item { font-size: 13px; color: #646a73; }
+  .stat-item b { font-size: 20px; color: #1f2329; font-weight: 600; margin-right: 4px; }
+
+  .notice {
+    background: #fff8e6; border: 1px solid #f5d78e; border-radius: 10px;
+    padding: 12px 16px; font-size: 13px; color: #8a6100; margin-bottom: 22px;
+  }
+
+  .panel {
+    background: #fff; border-radius: 14px; padding: 22px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 26px;
+  }
+  .panel h2 { font-size: 17px; margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: #8f959e; margin: 0 0 18px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; }
+  .field.full { grid-column: 1 / -1; }
+  .field label { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #3d444d; }
+  .field label .req { color: #e5484d; margin-left: 2px; }
+  input[type="text"], textarea {
+    width: 100%; padding: 9px 12px; font-size: 14px;
+    border: 1px solid #dee0e3; border-radius: 8px;
+    background: #fff; color: #1f2329; font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus, textarea:focus {
+    outline: none; border-color: #3370ff; box-shadow: 0 0 0 3px rgba(51,112,255,.12);
+  }
+  textarea { resize: vertical; min-height: 84px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .file-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .file-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: 8px; font-size: 13px;
+    border: 1px dashed #b8bcc2; background: #fafbfc; color: #4a5058; cursor: pointer;
+  }
+  .file-btn:hover { border-color: #3370ff; color: #3370ff; }
+  .file-name { font-size: 12.5px; color: #646a73; }
+  .file-name.ok { color: #14a76c; }
+  .file-name.err { color: #e5484d; }
+
+  .actions { display: flex; align-items: center; gap: 14px; margin-top: 18px; flex-wrap: wrap; }
+  button.primary {
+    padding: 10px 22px; font-size: 14px; font-weight: 500; border: none;
+    border-radius: 8px; background: #3370ff; color: #fff; cursor: pointer;
+  }
+  button.primary:hover { background: #2860e1; }
+  button.primary:disabled { background: #b8ceff; cursor: not-allowed; }
+  .hint { font-size: 12.5px; color: #8f959e; }
+
+  .msg { padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-top: 14px; display: none; }
+  .msg.show { display: block; }
+  .msg.ok { background: #e6f7ef; color: #0d7a4d; border: 1px solid #a8e0c4; }
+  .msg.err { background: #fdecec; color: #b32b2f; border: 1px solid #f5bcbe; }
+
+  .list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+  .list-head h2 { font-size: 17px; margin: 0; }
+  .search-box { position: relative; }
+  .search-box input { padding-left: 32px; width: 220px; }
+  .search-box svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); opacity: .4; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .card {
+    background: #fff; border: 1px solid #e8eaed; border-radius: 12px;
+    padding: 16px 18px; display: flex; flex-direction: column;
+    transition: box-shadow .15s, border-color .15s;
+  }
+  .card:hover { border-color: #c9d4e8; box-shadow: 0 3px 12px rgba(31,35,41,.07); }
+  .card-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .avatar {
+    flex: 0 0 36px; width: 36px; height: 36px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 600; color: #fff;
+  }
+  .card-title-wrap { flex: 1; min-width: 0; }
+  .market-title { font-size: 15px; font-weight: 600; margin: 0 0 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .market-author { font-size: 12.5px; color: #8f959e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .market-desc {
+    font-size: 13px; color: #5c626b; margin: 0 0 12px; min-height: 40px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .market-content { display: none; }
+  .card-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; color: #8f959e; margin-bottom: 12px; flex-wrap: wrap; }
+  .card-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .market-count, .market-downloads { font-weight: 600; color: #4a5058; }
+  .card-actions { display: flex; gap: 8px; margin-top: auto; }
+  button.ghost {
+    flex: 1; padding: 7px 12px; font-size: 13px; border-radius: 7px;
+    border: 1px solid #dee0e3; background: #fff; color: #3d444d; cursor: pointer;
+  }
+  button.ghost:hover { border-color: #3370ff; color: #3370ff; background: #f5f8ff; }
+  button.ghost.danger:hover { border-color: #e5484d; color: #e5484d; background: #fff5f5; }
+
+  .empty { text-align: center; padding: 56px 20px; color: #8f959e; font-size: 14px; }
+  .empty .big { font-size: clamp(28px, 5vw, 40px); margin-bottom: 10px; opacity: .35; }
+
+  .pager { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 24px; flex-wrap: wrap; }
+  .pager button {
+    min-width: 34px; height: 34px; padding: 0 10px; font-size: 13px;
+    border: 1px solid #dee0e3; background: #fff; color: #3d444d;
+    border-radius: 7px; cursor: pointer;
+  }
+  .pager button:hover:not(:disabled) { border-color: #3370ff; color: #3370ff; }
+  .pager button.active { background: #3370ff; border-color: #3370ff; color: #fff; }
+  .pager button:disabled { opacity: .45; cursor: not-allowed; }
+  .pager .info { font-size: 12.5px; color: #8f959e; margin-left: 10px; }
+
+  .modal-mask {
+    position: fixed; inset: 0; background: rgba(15,18,22,.5);
+    display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: 14px; width: 100%; max-width: 560px;
+    max-height: 84vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-head { padding: 18px 22px; border-bottom: 1px solid #eff0f2; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .modal-head h3 { margin: 0; font-size: 16px; }
+  .modal-close { border: none; background: none; font-size: 22px; line-height: 1; color: #8f959e; cursor: pointer; padding: 0 4px; }
+  .modal-close:hover { color: #1f2329; }
+  .modal-body { padding: 18px 22px; overflow-y: auto; }
+  .modal-body .kv { font-size: 13px; color: #646a73; margin-bottom: 10px; }
+  .modal-body .kv b { color: #1f2329; font-weight: 500; }
+  .modal-body pre {
+    background: #f7f8fa; border: 1px solid #eceef1; border-radius: 8px;
+    padding: 12px; font-size: 12px; max-height: 260px; overflow: auto;
+    white-space: pre-wrap; word-break: break-all; margin: 0;
+  }
+  .modal-foot { padding: 14px 22px; border-top: 1px solid #eff0f2; display: flex; gap: 10px; justify-content: flex-end; }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: 1fr; }
+    .search-box input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>便签集市</h1>
+    <p>上传你的 QuickNotes 分享包，也能一键下载别人的便签集。下载后在桌面应用里「导入分享包」即可使用。</p>
+    <div class="stat-row">
+      <div class="stat-item"><b class="stat-total" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH">0</b>个分享包</div>
+      <div class="stat-item"><b class="stat-pages">0</b>条便签</div>
+    </div>
+  </header>
+
+  <div class="notice">
+    <b>上传需要登录授权。</b>未登录的访客可以浏览和下载，但点「上传到集市」会被拦截。
+    提示：先在 QuickNotes 里「设置 → 导出分享包」拿到 JSON 文件，再回到这里上传。
+  </div>
+
+  <section class="panel">
+    <h2>上传分享包</h2>
+    <p class="sub">在 QuickNotes 里「设置 → 导出分享包」得到 JSON 文件，选择它上传即可。</p>
+    <form id="upload-form">
+      <div class="form-grid">
+        <div class="field">
+          <label for="f-title">标题<span class="req">*</span></label>
+          <input type="text" id="f-title" name="title" maxlength="60" placeholder="例如：我的快捷键备忘" required>
+        </div>
+        <div class="field">
+          <label for="f-author">作者</label>
+          <input type="text" id="f-author" name="author" maxlength="30" placeholder="你的昵称">
+        </div>
+        <div class="field full">
+          <label for="f-desc">简介</label>
+          <input type="text" id="f-desc" name="description" maxlength="120" placeholder="一句话说明这份便签集的内容">
+        </div>
+        <div class="field full">
+          <label>分享包文件<span class="req">*</span></label>
+          <div class="file-row">
+            <label class="file-btn" for="f-file">
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 11V2m0 0L4.5 5.5M8 2l3.5 3.5M2 11v2a1 1 0 001 1h10a1 1 0 001-1v-2"/></svg>
+              选择 JSON 文件
+            </label>
+            <input type="file" id="f-file" accept=".json,application/json" style="display:none">
+            <span class="file-name" id="file-name">未选择文件</span>
+          </div>
+        </div>
+      </div>
+      <div class="actions">
+        <button type="submit" class="primary" id="submit-btn">上传到集市</button>
+        <span class="hint">支持 QuickNotes 导出的 <code>quicknotes-share</code> 格式</span>
+      </div>
+      <div class="msg" id="form-msg"></div>
+      <textarea id="f-content" name="content" style="display:none"></textarea>
+      <input type="text" id="f-count" name="note_count" value="0" style="display:none">
+    </form>
+  </section>
+
+  <section>
+    <div class="list-head">
+      <h2>全部分享包</h2>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#1f2329" stroke-width="1.6"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+        <input type="text" id="search" placeholder="搜索标题或作者">
+      </div>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="empty" id="loading" style="display:block">
+      <div class="big">⏳</div>
+      <div>正在加载分享包…</div>
+    </div>
+    <template id="card-template">
+      <div class="card">
+        <div class="card-top">
+          <div class="avatar"></div>
+          <div class="card-title-wrap">
+            <div class="market-title" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH"></div>
+            <div class="market-author" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH"></div>
+          </div>
+        </div>
+        <div class="market-desc" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH"></div>
+        <div class="market-content" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH" style="display:none"></div>
+        <div class="card-meta">
+          <span>📝 <i class="market-count" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH" style="font-style:normal">0</i> 条便签</span>
+          <span>⬇️ <i class="market-downloads" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH" style="font-style:normal">0</i> 次下载</span>
+          <span class="market-time" data-sp-bindable="database" data-sp-database-id="xpIhHmzKyD2Tem4VlXuqhH"></span>
+        </div>
+        <div class="card-actions">
+          <button class="ghost" data-act="view">查看详情</button>
+          <button class="ghost" data-act="download">下载</button>
+        </div>
+      </div>
+    </template>
+    <div class="empty" id="empty" style="display:none">
+      <div class="big">📭</div>
+      <div>还没有人分享便签包，来做第一个吧</div>
+    </div>
+    <div class="pager" id="pager"></div>
+  </section>
+</div>
+
+<div class="modal-mask" id="modal-mask">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">分享包详情</h3>
+      <button class="modal-close" id="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <button class="ghost" id="modal-cancel" style="flex:0 0 auto;padding:8px 18px">关闭</button>
+      <button class="primary" id="modal-download" style="padding:8px 18px">下载分享包</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var DB_SCOPE = (typeof window !== 'undefined' && window.__SMART_PAGE__) ? window.__SMART_PAGE__ : null;
+  var db = DB_SCOPE ? DB_SCOPE.database : null;
+  var DATABASE_ID = 'xpIhHmzKyD2Tem4VlXuqhH';
+  var PAGE_SIZE = 9;
+
+  var ALL_ROWS = [];
+  var FILTERED = [];
+  var currentPage = 1;
+  var pickedShare = null;
+  var currentShare = null;
+
+  var COLORS = ['#3370ff', '#14a76c', '#f5a623', '#e5484d', '#8f5cf7', '#00a3a3', '#e67e22', '#2f9e8f'];
+
+  function $(sel) { return document.querySelector(sel); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function colorOf(name) {
+    var s = String(name || '?'), h = 0;
+    for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) % 100000; }
+    return COLORS[h % COLORS.length];
+  }
+  // 记录主键由后端返回，字段名带下划线前缀，不属于 schema 业务字段
+  function getRecordId(row) {
+    if (!row) return '';
+    var keys = Object.keys(row);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (k.charAt(0) === '_' || k === 'record_id') {
+        if (row[k]) return String(row[k]);
+      }
+    }
+    return '';
+  }
+  function fmtTime(v) {    if (!v) return '未知时间';
+    var d = new Date(v);
+    if (isNaN(d.getTime())) return String(v).slice(0, 16).replace('T', ' ');
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function showMsg(text, isErr) {
+    var el = $('#form-msg');
+    el.textContent = text;
+    el.className = 'msg show ' + (isErr ? 'err' : 'ok');
+    if (!isErr) setTimeout(function () { el.className = 'msg'; }, 4000);
+  }
+
+  /* ---------- 加载数据（分页三保险） ---------- */
+  function loadData(startCursor, acc, guard) {
+    acc = acc || [];
+    guard = guard || 0;
+    if (guard > 100) { finish(acc); return; }
+    if (!db) { finish(acc); return; }
+    db.query({
+      databaseId: DATABASE_ID,
+      sorts: [{ property: '上传时间', direction: 'descending' }],
+      pageSize: 200,
+      startCursor: startCursor
+    }).then(function (result) {
+      acc = acc.concat(result.results || []);
+      var next = result.nextCursor;
+      if (result.hasMore && next && next !== startCursor && (result.results || []).length) {
+        loadData(next, acc, guard + 1);
+      } else {
+        finish(acc);
+      }
+    }).catch(function (err) {
+      console.error('[database] 数据加载失败:', err);
+      finish(acc);
+    });
+  }
+
+  function finish(rows) {
+    var ld = $('#loading');
+    if (ld) ld.style.display = 'none';
+    ALL_ROWS = rows;
+    var totalNotes = 0;
+    for (var i = 0; i < rows.length; i++) {
+      var n = Number(rows[i]['便签数量']);
+      totalNotes += (isNaN(n) ? 0 : n);
+    }
+    $('.stat-total').textContent = rows.length;
+    $('.stat-pages').textContent = totalNotes;
+    applyFilter();
+  }
+
+  /* ---------- 渲染 ---------- */
+  function applyFilter() {
+    var q = ($('#search').value || '').trim().toLowerCase();
+    if (!q) {
+      FILTERED = ALL_ROWS.slice();
+    } else {
+      FILTERED = ALL_ROWS.filter(function (r) {
+        var t = String(r['标题'] || '').toLowerCase();
+        var a = String(r['作者'] || '').toLowerCase();
+        var d = String(r['简介'] || '').toLowerCase();
+        return t.indexOf(q) >= 0 || a.indexOf(q) >= 0 || d.indexOf(q) >= 0;
+      });
+    }
+    currentPage = 1;
+    renderCards();
+    renderPager();
+  }
+
+  function renderCards() {
+    var box = $('#cards');
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var pageRows = FILTERED.slice(start, start + PAGE_SIZE);
+
+    if (!pageRows.length) {
+      box.innerHTML = '';
+      box.style.display = 'none';
+      $('#empty').style.display = 'block';
+      $('#empty').querySelector('div:last-child').textContent =
+        ALL_ROWS.length ? '没有匹配的分享包' : '还没有人分享便签包，来做第一个吧';
+      return;
+    }
+    box.style.display = 'grid';
+    $('#empty').style.display = 'none';
+
+    var tpl = $('#card-template');
+    box.innerHTML = '';
+
+    for (var i = 0; i < pageRows.length; i++) {
+      var r = pageRows[i];
+      var author = r['作者'] || '匿名';
+      var title = r['标题'] || '未命名便签集';
+      var desc = r['简介'] || '（作者没有写简介）';
+      var cnt = Number(r['便签数量']);
+      if (isNaN(cnt)) cnt = 0;
+      var dl = Number(r['下载次数']);
+      if (isNaN(dl)) dl = 0;
+      var idx = start + i;
+
+      var node = tpl.content.firstElementChild.cloneNode(true);
+      node.setAttribute('data-idx', String(idx));
+
+      var av = node.querySelector('.avatar');
+      av.style.background = colorOf(author);
+      av.textContent = author.slice(0, 1);
+      node.querySelector('.market-title').textContent = title;
+      node.querySelector('.market-author').textContent = author;
+      node.querySelector('.market-desc').textContent = desc;
+      node.querySelector('.market-content').textContent = String(r['分享内容'] || '');
+      node.querySelector('.market-count').textContent = cnt;
+      node.querySelector('.market-downloads').textContent = dl;
+      node.querySelector('.market-time').textContent = fmtTime(r['上传时间']);
+
+      var btns = node.querySelectorAll('button[data-act]');
+      for (var b = 0; b < btns.length; b++) {
+        btns[b].setAttribute('data-idx', String(idx));
+      }
+      box.appendChild(node);
+    }
+  }
+
+  function renderPager() {
+    var totalPages = Math.max(1, Math.ceil(FILTERED.length / PAGE_SIZE));
+    var pager = $('#pager');
+    while (pager.firstChild) pager.removeChild(pager.firstChild);
+    if (totalPages <= 1) { return; }
+
+    function mkBtn(text, pg, active, disabled) {
+      var b = document.createElement('button');
+      b.textContent = text;
+      if (pg) b.setAttribute('data-pg', String(pg));
+      if (active) b.className = 'active';
+      if (disabled) b.disabled = true;
+      return b;
+    }
+
+    pager.appendChild(mkBtn('上一页', 'prev', false, currentPage === 1));
+
+    var s = Math.max(1, currentPage - 2);
+    var e = Math.min(totalPages, s + 4);
+    s = Math.max(1, e - 4);
+    for (var p = s; p <= e; p++) {
+      pager.appendChild(mkBtn(String(p), p, p === currentPage, false));
+    }
+
+    pager.appendChild(mkBtn('下一页', 'next', false, currentPage === totalPages));
+
+    var info = document.createElement('span');
+    info.className = 'info';
+    info.textContent = '共 ' + FILTERED.length + ' 个 · 第 ' + currentPage + '/' + totalPages + ' 页';
+    pager.appendChild(info);
+  }
+
+  /* ---------- 上传 ---------- */
+  $('#f-file').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0];
+    var label = $('#file-name');
+    if (!f) { label.textContent = '未选择文件'; label.className = 'file-name'; pickedShare = null; return; }
+    var reader = new FileReader();
+    reader.onload = function () {
+      var text = String(reader.result || '');
+      try {
+        var obj = JSON.parse(text);
+        if (!obj || obj.type !== 'quicknotes-share' || !Array.isArray(obj.notes)) {
+          throw new Error('不是有效的分享包');
+        }
+        pickedShare = { text: text, count: obj.notes.length, meta: obj.meta || {} };
+        label.textContent = f.name + '（' + obj.notes.length + ' 条便签）';
+        label.className = 'file-name ok';
+        $('#f-count').value = obj.notes.length;
+        if (!$('#f-title').value && pickedShare.meta.title) $('#f-title').value = pickedShare.meta.title;
+        if (!$('#f-author').value && pickedShare.meta.author) $('#f-author').value = pickedShare.meta.author;
+      } catch (err) {
+        pickedShare = null;
+        label.textContent = f.name + ' —— 解析失败，请确认是 QuickNotes 导出的分享包';
+        label.className = 'file-name err';
+      }
+    };
+    reader.onerror = function () {
+      pickedShare = null;
+      label.textContent = f.name + ' —— 读取失败';
+      label.className = 'file-name err';
+    };
+    reader.readAsText(f);
+  });
+
+  $('#upload-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = $('#submit-btn');
+
+    if (!db) { showMsg('当前环境未加载数据模块，请从资料库页面打开后再试。', true); return; }
+
+    var title = ($('#f-title').value || '').trim();
+    if (!title) { showMsg('请填写标题', true); return; }
+    if (!pickedShare) { showMsg('请先选择一个有效的分享包 JSON 文件', true); return; }
+
+    btn.disabled = true;
+    var oldText = btn.textContent;
+    btn.textContent = '上传中...';
+
+    var author = ($('#f-author').value || '').trim() || '匿名';
+    var desc = ($('#f-desc').value || '').trim();
+    var properties = {};
+    try {
+      properties['标题'] = { text: title };
+      properties['作者'] = { text: author };
+      properties['简介'] = { text: desc };
+      properties['分享内容'] = { text: pickedShare.text };
+      properties['便签数量'] = { number: pickedShare.count };
+      properties['下载次数'] = { number: 0 };
+      properties['上传时间'] = { date: new Date().toISOString() };
+    } catch (err) {
+      console.error('[database] 构造数据失败:', err);
+    }
+
+    db.addRecord({ databaseId: DATABASE_ID, properties: properties }).then(function () {
+      showMsg('上传成功！已出现在下方列表中。', false);
+      $('#upload-form').reset();
+      $('#f-count').value = 0;
+      pickedShare = null;
+      $('#file-name').textContent = '未选择文件';
+      $('#file-name').className = 'file-name';
+      loadData();
+    }).catch(function (err) {
+      console.error('[database] 提交失败:', err);
+      var m = String((err && (err.message || err.msg)) || '');
+      if (!m) m = String(err || '');
+
+      var msgEl = $('#form-msg');
+      msgEl.className = 'msg show err';
+      msgEl.textContent = '';
+
+      var head = document.createElement('div');
+      if (/login|auth|登录|401|403|unauthor|permission|权限/i.test(m)) {
+        head.textContent = '上传被拒绝：需要登录授权。请先登录 WorkBuddy，再回到本页上传。';
+      } else if (/56153|too large|行大小|1MB/i.test(m)) {
+        head.textContent = '上传失败：分享包超过单条 1MB 上限，请先精简便签内容。';
+      } else if (/56150|行数|limit/i.test(m)) {
+        head.textContent = '上传失败：表内记录数已达上限。';
+      } else {
+        head.textContent = '上传失败' + (m ? '：' + m : '（未知错误）');
+      }
+      msgEl.appendChild(head);
+
+      var dbg = document.createElement('div');
+      dbg.style.cssText = 'margin-top:8px;font-size:12px;opacity:.75;word-break:break-all;';
+      dbg.textContent = '诊断信息：' + (m || '（浏览器未返回错误详情）');
+      msgEl.appendChild(dbg);
+    }).finally(function () {
+      btn.disabled = false;
+      btn.textContent = oldText;
+    });
+  });
+
+  /* ---------- 本地缓存（DSDK008） ---------- */
+  var CACHE_KEY = 'notes_market_form_draft';
+  var saveTimer = null;
+  function collectDraft() {
+    return {
+      title: $('#f-title').value,
+      author: $('#f-author').value,
+      description: $('#f-desc').value
+    };
+  }
+  function saveDraft() {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(collectDraft()));
+    } catch (e) { /* 静默降级 */ }
+  }
+  function restoreDraft() {
+    try {
+      var raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw) || {};
+      if (d.title) $('#f-title').value = d.title;
+      if (d.author) $('#f-author').value = d.author;
+      if (d.description) $('#f-desc').value = d.description;
+    } catch (e) { /* 静默降级 */ }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(CACHE_KEY); } catch (e) { /* 静默降级 */ }
+  }
+  ['#f-title', '#f-author', '#f-desc'].forEach(function (sel) {
+    var el = $(sel);
+    el.addEventListener('input', function () {
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveDraft, 300);
+    });
+  });
+
+  /* ---------- 详情 / 下载 ---------- */
+  function kvLine(label, value) {
+    var div = document.createElement('div');
+    div.className = 'kv';
+    var b = document.createElement('b');
+    b.textContent = label;
+    div.appendChild(b);
+    div.appendChild(document.createTextNode(String(value == null ? '' : value)));
+    return div;
+  }
+
+  function openDetail(row) {
+    currentShare = row;
+    var author = row['作者'] || '匿名';
+    var title = row['标题'] || '未命名便签集';
+    var cnt = Number(row['便签数量']);
+    if (isNaN(cnt)) cnt = 0;
+    var dl = Number(row['下载次数']);
+    if (isNaN(dl)) dl = 0;
+
+    $('#modal-title').textContent = title;
+
+    var box = $('#modal-body');
+    while (box.firstChild) box.removeChild(box.firstChild);
+
+    box.appendChild(kvLine('作者：', author));
+    box.appendChild(kvLine('便签数：', cnt + ' 条'));
+    box.appendChild(kvLine('下载次数：', dl));
+    box.appendChild(kvLine('上传时间：', fmtTime(row['上传时间'])));
+    box.appendChild(kvLine('简介：', row['简介'] || '（无）'));
+
+    var head = document.createElement('div');
+    head.className = 'kv';
+    head.style.margin = '16px 0 6px';
+    var hb = document.createElement('b');
+    hb.textContent = '分享包内容预览（JSON）：';
+    head.appendChild(hb);
+    box.appendChild(head);
+
+    var pre = document.createElement('pre');
+    pre.textContent = String(row['分享内容'] || '').slice(0, 3000);
+    box.appendChild(pre);
+
+    $('#modal-mask').className = 'modal-mask show';
+  }
+
+  function downloadShare(row) {
+    var content = row['分享内容'];
+    if (!content) { return; }
+    var title = row['标题'] || 'quicknotes-share';
+    var safeName = String(title).replace(/[\\/:*?"<>|]/g, '_').slice(0, 40) || 'quicknotes-share';
+
+    try {
+      var blob = new Blob([content], { type: 'application/json' });
+      var url = (typeof URL !== 'undefined' && URL.createObjectURL) ? URL.createObjectURL(blob) : '';
+      if (url) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = safeName + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+      }
+    } catch (e) {
+      console.error('[download] 下载失败:', e);
+    }
+
+    var dl = Number(row['下载次数']);
+    if (isNaN(dl)) dl = 0;
+    row['下载次数'] = dl + 1;
+    var recId = getRecordId(row);
+    if (!db || !recId) return;
+    db.updateRecord({
+      databaseId: DATABASE_ID,
+      recordId: recId,
+      properties: { '下载次数': { number: dl + 1 } }
+    }).then(function () {
+      loadData();
+    }).catch(function (err) {
+      console.error('[database] 更新下载次数失败:', err);
+    });
+  }
+
+  $('#cards').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    var idx = Number(btn.getAttribute('data-idx'));
+    var row = FILTERED[idx];
+    if (!row) return;
+    if (btn.getAttribute('data-act') === 'view') openDetail(row);
+    else downloadShare(row);
+  });
+
+  $('#pager').addEventListener('click', function (e) {
+    var btn = e.target.closest('button[data-pg]');
+    if (!btn || btn.disabled) return;
+    var v = btn.getAttribute('data-pg');
+    var totalPages = Math.max(1, Math.ceil(FILTERED.length / PAGE_SIZE));
+    if (v === 'prev') currentPage = Math.max(1, currentPage - 1);
+    else if (v === 'next') currentPage = Math.min(totalPages, currentPage + 1);
+    else currentPage = Number(v);
+    renderCards();
+    renderPager();
+    try {
+      if (window.scrollTo) {
+        window.scrollTo({ top: Math.max(0, $('#cards').offsetTop - 90), behavior: 'smooth' });
+      }
+    } catch (e) { /* 忽略不支持平滑滚动的环境 */ }
+  });
+
+  $('#search').addEventListener('input', function () {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(applyFilter, 250);
+  });
+
+  $('#modal-close').addEventListener('click', function () { $('#modal-mask').className = 'modal-mask'; });
+  $('#modal-cancel').addEventListener('click', function () { $('#modal-mask').className = 'modal-mask'; });
+  $('#modal-mask').addEventListener('click', function (e) {
+    if (e.target === $('#modal-mask')) $('#modal-mask').className = 'modal-mask';
+  });
+  $('#modal-download').addEventListener('click', function () {
+    if (currentShare) downloadShare(currentShare);
+  });
+
+  /* ---------- 启动 ---------- */
+  try {
+    restoreDraft();
+    loadData();
+  } catch (e) {
+    console.error('[database] 初始化失败:', e);
+    finish([]);
+  }
+})();
+</script>
+</body>
+</html>

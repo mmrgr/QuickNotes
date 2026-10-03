@@ -1,0 +1,14 @@
+{
+  "database_id": "xpIhHmzKyD2Tem4VlXuqhH",
+  "records": [
+    {
+      "标题": { "text": "我的开发者常用片段" },
+      "作者": { "text": "集市小助手" },
+      "简介": { "text": "一份示例分享包，包含几条常用的开发备忘。你可以直接下载导入 QuickNotes 试试效果。" },
+      "分享内容": { "text": "{\"type\":\"quicknotes-share\",\"version\":1,\"meta\":{\"title\":\"我的开发者常用片段\",\"author\":\"集市小助手\",\"count\":3},\"notes\":[{\"text\":\"Ctrl+Alt+N 召唤便签窗口，再按一次隐藏\",\"pinned\":true},{\"text\":\"git commit --amend --no-edit 在最后一次提交上追加改动\"},{\"text\":\"排序思路：先按置顶分组，组内保持手动顺序\"}]}" },
+      "便签数量": { "number": 3 },
+      "下载次数": { "number": 0 },
+      "上传时间": { "date": "2026-10-02T08:00:00.000Z" }
+    }
+  ]
+}

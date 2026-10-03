@@ -1,0 +1,22 @@
+# Python / PyInstaller temporary files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.spec.bak
+
+# Local development environments and logs
+.venv/
+venv/
+_dev_env/
+*.log
+
+# Local user data (QuickNotes stores data under %LOCALAPPDATA% by default)
+data.json
+*.user.json
+
+# Keep the generated portable executable in release/; ignore only temporary archives.
+release/*.zip
